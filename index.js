@@ -4,6 +4,7 @@ const app = express();
 require('dotenv').config()
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.port || 3000;
+const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
 
 
@@ -82,6 +83,25 @@ async function run() {
       res.send(result)
 
     })
+
+
+
+
+    //payment related apis
+    app.post('create-checkout-session', async(req, res) => {
+      const paymentInfo = req.body;
+      const session = await stripe.checkout.sessions.create({
+        line_items: [
+          {
+            price: '{{PRICE_ID}}',
+            quantity: 1,
+          },
+        ],
+        mode: 'payment',
+        success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success`,
+      })
+    })
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
