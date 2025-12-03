@@ -21,7 +21,8 @@ app.use(express.json());
 app.use(cors());
 
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.vyznij5.mongodb.net/?appName=Cluster0`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.3o3pwj7.mongodb.net/?appName=Cluster0;
+`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -150,6 +151,19 @@ async function run() {
 
             const session = await stripe.checkout.sessions.retrieve(sessionId);
 
+
+            const transactionId = session.payment_intent;
+            const query = {transactionId: transactionId}
+
+            const paymentExist = await paymentCollection.findOne(query);
+
+
+            if(paymentExist){
+                return res.send({message: 'already exist', transactionId, trackingId: paymentExist.trackingId})
+            }
+
+
+
             console.log('session retrieve', session)
             const trackingId = generateTrackingId()
 
@@ -173,7 +187,8 @@ async function run() {
                     parcelName: session.metadata.parcelName,
                     transactionId: session.payment_intent,
                     paymentStatus: session.payment_status,
-                    paidAt: new Date()
+                    paidAt: new Date(),
+                    trackingId: trackingId
                 }
 
                 if (session.payment_status === 'paid') {
@@ -191,6 +206,19 @@ async function run() {
             }
 
             res.send({ success: false })
+        })
+
+
+        //payment related apis
+        app.get('/payments', async(req, res) => {
+            const email = req.query.email;
+            const query = {}
+            if(email){
+                query.customerEmail = email
+            }
+            const cursor = paymentCollection.find(query)
+            const result = await cursor.toArray();
+            res.send(result)
         })
 
         // Send a ping to confirm a successful connection
