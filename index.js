@@ -106,7 +106,7 @@ async function run() {
             const query = {};
 
             if(searchText){
-                // query.displayName = {$regex: searchText, $options: 'i'}
+                
 
                 query.$or = [
                     {displayName: {$regex: searchText, $options: 'i'}},
@@ -360,7 +360,7 @@ app.delete('/parcels/:id', async (req, res) => {
             const sessionId = req.query.session_id;
             const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-            // console.log('session retrieve', session)
+          
             const transactionId = session.payment_intent;
             const query = { transactionId: transactionId }
 
