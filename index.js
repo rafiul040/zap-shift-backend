@@ -84,7 +84,7 @@ async function run() {
         const log = {
             trackingId, 
             status,
-            details: status.split('-').join(' '),
+            details: status.split('_').join(' '),
             createdAt: new Date()
         }
         const result = await trackingsCollection.insertOne(log)
@@ -200,15 +200,17 @@ async function run() {
 
     app.post("/parcels", async (req, res) => {
       const parcel = req.body;
+      const trackingId = generateTrackingId()
       // parcel created time
       parcel.createdAt = new Date();
 
+      parcel.trackingId = trackingId;
       const result = await parcelsCollection.insertOne(parcel);
       res.send(result);
     });
 
     app.patch("/parcels/:id", async (req, res) => {
-      const { riderId, riderName, riderEmail } = req.body;
+      const { riderId, riderName, riderEmail, trackingId } = req.body;
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
 
@@ -234,14 +236,14 @@ async function run() {
         riderUpdatedDoc
       );
 
-      logTracking()
+      logTracking(trackingId, 'driver_assigned')
 
 
       res.send(riderResult);
     });
 
     app.patch("/parcels/:id/status", async (req, res) => {
-      const { deliveryStatus, riderId } = req.body;
+      const { deliveryStatus, riderId, trackingId } = req.body;
       const query = { _id: new ObjectId(req.params.id) };
       const updatedDoc = {
         $set: {
@@ -260,14 +262,12 @@ async function run() {
           riderQuery,
           riderUpdatedDoc
         );
-
-
-
-
-
       }
 
       const result = await parcelsCollection.updateOne(query, updatedDoc);
+
+      logTracking(trackingId, deliveryStatus)
+
       res.send(result);
     });
 
@@ -387,7 +387,7 @@ async function run() {
         if (session.payment_status === "paid") {
           const resultPayment = await paymentCollection.insertOne(payment);
 
-            logTracking(trackingId, 'pending-pickup')
+            logTracking(trackingId, 'parcel_paid')
 
           res.send({
             success: true,
@@ -478,6 +478,14 @@ async function run() {
 
       res.send(result);
     });
+
+
+    app.get('/trackings/:trackingId/logs', async(req, res) => {
+        const trackingId = req.params.trackingId;
+        const query = {trackingId}
+        const result = await trackingsCollection.find(query).toArray()
+        res.send(result)
+    })
 
     await client.db("admin").command({ ping: 1 });
     console.log(
