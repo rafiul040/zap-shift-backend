@@ -203,6 +203,7 @@ async function run() {
       const trackingId = generateTrackingId()
       // parcel created time
       parcel.createdAt = new Date();
+      logTracking(trackingId, 'parcel_created')
 
       parcel.trackingId = trackingId;
       const result = await parcelsCollection.insertOne(parcel);
@@ -308,37 +309,7 @@ async function run() {
       res.send({ url: session.url });
     });
 
-    // old
-    app.post("/create-checkout-session", async (req, res) => {
-      const paymentInfo = req.body;
-      const amount = parseInt(paymentInfo.cost) * 100;
-
-      const session = await stripe.checkout.sessions.create({
-        line_items: [
-          {
-            price_data: {
-              currency: "USD",
-              unit_amount: amount,
-              product_data: {
-                name: paymentInfo.parcelName,
-              },
-            },
-            quantity: 1,
-          },
-        ],
-        customer_email: paymentInfo.senderEmail,
-        mode: "payment",
-        metadata: {
-          parcelId: paymentInfo.parcelId,
-          parcelName: paymentInfo.parcelName,
-        },
-        success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success`,
-        cancel_url: `${process.env.SITE_DOMAIN}/dashboard/payment-cancelled`,
-      });
-
-      console.log(session);
-      res.send({ url: session.url });
-    });
+   
 
     app.patch("/payment-success", async (req, res) => {
       const sessionId = req.query.session_id;
@@ -366,7 +337,7 @@ async function run() {
           $set: {
             paymentStatus: "paid",
             deliveryStatus: "pending-pickup",
-            trackingId: trackingId,
+            
           },
         };
 
