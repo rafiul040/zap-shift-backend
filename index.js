@@ -300,6 +300,7 @@ async function run() {
         mode: "payment",
         metadata: {
           parcelId: paymentInfo.parcelId,
+          trackingId: paymentInfo.trackingId
         },
         customer_email: paymentInfo.senderEmail,
         success_url: `${process.env.SITE_DOMAIN}/dashboard/payment-success?session_id={CHECKOUT_SESSION_ID}`,
@@ -328,7 +329,7 @@ async function run() {
         });
       }
 
-      const trackingId = generateTrackingId();
+      const trackingId = session.metadata.trackingId
 
       if (session.payment_status === "paid") {
         const id = session.metadata.parcelId;
