@@ -50,10 +50,10 @@ const verifyFBToken = async (req, res, next) => {
   }
 };
 
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.3o3pwj7.mongodb.net/?appName=Cluster0;
-// `;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.3o3pwj7.mongodb.net/?appName=Cluster0;
+`;
 
-const uri = `mongodb+srv://${encodeURIComponent(process.env.DB_USER)}:${encodeURIComponent(process.env.DB_PASS)}@cluster0.3o3pwj7.mongodb.net/?appName=Cluster0`;
+
 
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -551,7 +551,8 @@ async function run() {
         res.send(result)
     })
 
-   
+   await client.db("admin").command({ping: 1});
+   console.log('pinged your deployment')
   } finally {
   }
 }
